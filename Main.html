@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Text Extractor</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Upload or Drag & Drop a PDF</h1>
+        
+        <!-- Upload Form -->
+        <input type="file" id="fileInput" accept="application/pdf">
+        
+        <!-- Drag and Drop Area -->
+        <div id="dropZone" class="drop-zone">
+            <p>Drag and Drop your PDF here</p>
+        </div>
+
+        <button id="extractBtn">Extract Text</button>
+        <pre id="output"></pre>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
