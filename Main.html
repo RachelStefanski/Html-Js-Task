@@ -1,31 +1,70 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Text Extractor</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
     </script>
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Text Extractor</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-    <div class="container">
-        <h1>Upload or Drag & Drop a PDF</h1>
-        
-        <!-- Upload Form -->
-        <input type="file" id="fileInput" accept="application/pdf">
-        
-        <!-- Drag and Drop Area -->
-        <div id="dropZone" class="drop-zone">
-            <p>Drag and Drop your PDF here</p>
+    <div class="app-container">
+        <div class="header">
+            <h1>PDF Text Extractor</h1>
+            <p>Upload a PDF file and extract text easily</p>
         </div>
 
-        <button id="extractBtn">Extract Text</button>
-        <pre id="output"></pre>
+        <div class="upload-section">
+            <div class="file-input-wrapper">
+                <input type="file" id="fileInput" class="file-input" accept="application/pdf">
+            </div>
+
+            <div id="dropZone" class="drop-zone">
+                <div class="drop-zone-icon">📄</div>
+                <div class="drop-zone-text">Drag and drop PDF file here</div>
+                <div class="drop-zone-subtext">or click to select a file</div>
+            </div>
+        </div>
+
+        <div class="success-message" id="successMessage"></div>
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div>Processing PDF file...</div>
+        </div>
+
+        <div class="controls">
+            <button id="extractBtn" class="btn btn-primary" disabled>🔍 Extract Text</button>
+            <button id="downloadBtn" class="btn btn-secondary" disabled>💾 Download as Text File</button>
+        </div>
+
+        <div class="output-section">
+            <div class="output-header">
+                <div class="output-title">Extracted Text</div>
+                <div class="output-info" id="outputInfo"></div>
+            </div>
+            
+            <div class="stats" id="stats" style="display: none;">
+                <div class="stat-item">
+                    <div class="stat-value" id="pageCount">0</div>
+                    <div class="stat-label">Pages</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="wordCount">0</div>
+                    <div class="stat-label">Words</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="charCount">0</div>
+                    <div class="stat-label">Characters</div>
+                </div>
+            </div>
+            
+            <div id="output" class="output-container"></div>
+        </div>
     </div>
 
     <script src="app.js"></script>
