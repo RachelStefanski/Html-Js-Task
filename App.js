@@ -38,11 +38,11 @@ function hideLoading() {
 function updateStats(text, pages) {
     const words = text.trim().split(/\s+/).filter(word => word.length > 0).length;
     const characters = text.length;
-    
+
     pageCount.textContent = pages;
     wordCount.textContent = words.toLocaleString();
     charCount.textContent = characters.toLocaleString();
-    
+
     stats.style.display = 'grid';
     outputInfo.textContent = `Updated: ${new Date().toLocaleString('en-US')}`;
 }
@@ -50,15 +50,15 @@ function updateStats(text, pages) {
 // טעינת PDF
 async function loadPDF(file) {
     showLoading();
-    
+
     try {
         const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         await processPDF(pdf);
-        
+
         showMessage(successMessage, `Text extracted successfully from ${pdf.numPages} pages!`);
         downloadBtn.disabled = false;
-        
+
     } catch (error) {
         showMessage(errorMessage, `Error loading file: ${error.message}`);
         console.error('Error loading PDF:', error);
@@ -72,21 +72,90 @@ async function processPDF(pdf) {
     const numPages = pdf.numPages;
     let allText = '';
 
+    // עבור כל עמוד ב-PDF
     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
         const page = await pdf.getPage(pageNum);
         const textContent = await page.getTextContent();
-        
-        let pageText = '';
+
+        let words = [];
         textContent.items.forEach(item => {
-            pageText += item.str + ' ';
+            words.push({
+                text: item.str,
+                x: item.transform[4],  // קואורדינטת X
+                y: item.transform[5]   // קואורדינטת Y
+            });
         });
-        
-        allText += `\n${pageText.trim()}\n`;
+
+        // שלב 1: חישוב הטורים לפי X
+        const columns = detectColumns(words);  // זיהוי הטורים בעמוד
+
+        // הצגת התוצאה
+        let outputHTML = '';
+        columns.forEach(column => {
+            outputHTML += column.map(word => word.text).join(' ') + ' ';  // שרשור מילים בטור
+        });
+
+        allText += outputHTML + '\n';  // הוספת הטקסט לעיבוד
     }
 
     extractedText = allText.trim();
-    output.textContent = extractedText;
-    updateStats(extractedText, numPages);
+    output.textContent = extractedText; 
+    updateStats(extractedText, numPages); 
+}
+
+// חישוב המרחק בין שתי מילים
+function calculateDistance(word1, word2) {
+    // אם אין קואורדינטות תקינות, תדלג על חישוב המרחק
+    if (word1.x === undefined || word2.x === undefined) {
+        return 0;
+    }
+    return Math.abs(word1.x - word2.x);
+}
+
+// זיהוי טורים בעמוד
+function detectColumns(words) {
+    let columns = [];
+    let currentColumn = [];
+    let lastX = words[0].x;
+    let averageDistance = calculateAverageDistance(words);
+
+    words.forEach((word, index) => {
+        // אם המילה הנוכחית או המילה הבאה אינה מכילה קואורדינטה, נדלג עליה
+        if (word.x === undefined || words[index + 1]?.x === undefined) {
+            return;
+        }
+
+        let distance = calculateDistance(word, words[index + 1]);
+
+        // אם המרחק גדול מהממוצע, מדובר בטור חדש
+        if (distance > averageDistance) {
+            columns.push(currentColumn);
+            currentColumn = [word];
+        } else {
+            currentColumn.push(word);
+        }
+
+        lastX = word.x;
+    });
+
+    if (currentColumn.length > 0) {
+        columns.push(currentColumn); // הוספת הטור האחרון
+    }
+
+    return columns;
+}
+
+// חישוב ממוצע המרחק בין מילים בעמוד
+function calculateAverageDistance(words) {
+    let totalDistance = 0;
+    let count = 0;
+
+    for (let i = 1; i < words.length; i++) {
+        totalDistance += calculateDistance(words[i], words[i - 1]);
+        count++;
+    }
+
+    return count > 0 ? totalDistance / count : 0;
 }
 
 // הורדת קובץ טקסט
@@ -102,12 +171,12 @@ function downloadTextFile() {
     link.download = `extracted-text-${new Date().toISOString().slice(0, 10)}.txt`;
     link.click();
     URL.revokeObjectURL(link.href);
-    
+
     showMessage(successMessage, 'File downloaded successfully!');
 }
 
 // מאזיני אירועים
-fileInput.addEventListener('change', function() {
+fileInput.addEventListener('change', function () {
     const file = fileInput.files[0];
     if (file && file.type === 'application/pdf') {
         pdfFile = file;
@@ -119,20 +188,20 @@ fileInput.addEventListener('change', function() {
 });
 
 // גרירה ושחרור
-dropZone.addEventListener('dragover', function(e) {
+dropZone.addEventListener('dragover', function (e) {
     e.preventDefault();
     dropZone.classList.add('dragover');
 });
 
-dropZone.addEventListener('dragleave', function(e) {
+dropZone.addEventListener('dragleave', function (e) {
     e.preventDefault();
     dropZone.classList.remove('dragover');
 });
 
-dropZone.addEventListener('drop', function(e) {
+dropZone.addEventListener('drop', function (e) {
     e.preventDefault();
     dropZone.classList.remove('dragover');
-    
+
     const file = e.dataTransfer.files[0];
     if (file && file.type === 'application/pdf') {
         pdfFile = file;
@@ -143,12 +212,12 @@ dropZone.addEventListener('drop', function(e) {
     }
 });
 
-dropZone.addEventListener('click', function() {
+dropZone.addEventListener('click', function () {
     fileInput.click();
 });
 
 // לחיצה על כפתור חילוץ
-extractBtn.addEventListener('click', function() {
+extractBtn.addEventListener('click', function () {
     if (pdfFile) {
         loadPDF(pdfFile);
     } else {
@@ -161,7 +230,7 @@ downloadBtn.addEventListener('click', downloadTextFile);
 
 // מניעת התנהגות ברירת מחדל לגרירה
 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    document.addEventListener(eventName, function(e) {
+    document.addEventListener(eventName, function (e) {
         e.preventDefault();
         e.stopPropagation();
     });
